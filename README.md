@@ -2,19 +2,13 @@
 
 ![logo](assets/gosplash.webp)
 
-A golang application used to share secrets and files securely using a web UI, HTTP request or even CLI.
+A golang application used to share files and secrets both privately and publicly.
 
-These secrets are one time secrets and will be deleted once readed.
+We can login and send the file to another registered user and it will pop up to his homepage.
 
-This project is heavily inspired by onetimesecret and transfersh.
+Public sharing is also supported via secure URLs that are deleted once the time expires or the limit imposed is exceeded.
 
-Case scenario: 
-
-A user needs a database dump to perform a task. We need to send him the database dump securely so we upload the file to gosplash.
-
-Uploading the file returns the URL of the file we want to share and the secret URL.
-
-We can pass both on the same channel, email or chat but for even more security we can send each URL on a different channel.
+For sharing the file we need to add a special token facilitated by the user or both users need to be part of the same organization.
 
 
 ## Authors
