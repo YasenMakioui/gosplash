@@ -1,45 +1,65 @@
-CREATE TABLE "Users" (
-  "user_id" INT PRIMARY KEY,
-  "email" VARCHAR,
-  "password_hash" VARCHAR,
-  "created_at" DATETIME
+CREATE TABLE "users" (
+  "id" uuid PRIMARY KEY,
+  "username" varchar(255) UNIQUE NOT NULL,
+  "email" varchar(255) UNIQUE NOT NULL,
+  "password_hash" varchar(255) NOT NULL,
+  "role" varchar(50) DEFAULT 'user',
+  "created_at" timestamp NOT NULL
 );
 
-CREATE TABLE "Secrets" (
-  "secret_id" INT PRIMARY KEY,
-  "user_id" INT,
-  "hash" VARCHAR,
-  "data" TEXT,
-  "expires_at" DATETIME,
-  "created_at" DATETIME
+CREATE TABLE "files" (
+  "id" uuid PRIMARY KEY,
+  "uploader_id" uuid NOT NULL,
+  "file_name" varchar(255) NOT NULL,
+  "file_size" bigint NOT NULL,
+  "storage_path" varchar(512) NOT NULL,
+  "expires_at" timestamp NOT NULL,
+  "max_downloads" int NOT NULL,
+  "downloads" int DEFAULT 0,
+  "encryption_key" text NOT NULL,
+  "created_at" timestamp NOT NULL
 );
 
-CREATE TABLE "Files" (
-  "file_id" INT PRIMARY KEY,
-  "user_id" INT,
-  "hash" VARCHAR,
-  "file_path" VARCHAR,
-  "expires_at" DATETIME,
-  "created_at" DATETIME
+CREATE TABLE "file_shares" (
+  "id" uuid PRIMARY KEY,
+  "file_id" uuid NOT NULL,
+  "sender_id" uuid NOT NULL,
+  "recipient_id" uuid,
+  "public_url" varchar(512),
+  "created_at" timestamp NOT NULL
 );
 
-CREATE TABLE "Access_Logs" (
-  "log_id" INT PRIMARY KEY,
-  "secret_or_file_id" INT,
-  "accessed_at" DATETIME,
-  "ip_address" VARCHAR
+CREATE TABLE "secrets" (
+  "id" uuid PRIMARY KEY,
+  "owner_id" uuid NOT NULL,
+  "secret_name" varchar(255) NOT NULL,
+  "secret_value" text NOT NULL,
+  "expires_at" timestamp,
+  "created_at" timestamp NOT NULL
 );
 
-CREATE TABLE "Revoked_Tokens" (
-  "token_id" INT PRIMARY KEY,
-  "jti" VARCHAR UNIQUE,
-  "revoked_at" DATETIME
+CREATE TABLE "secret_shares" (
+  "id" uuid PRIMARY KEY,
+  "secret_id" uuid NOT NULL,
+  "sender_id" uuid NOT NULL,
+  "recipient_id" uuid,
+  "public_url" varchar(512),
+  "expires_at" timestamp,
+  "created_at" timestamp
 );
 
-ALTER TABLE "Secrets" ADD FOREIGN KEY ("user_id") REFERENCES "Users" ("user_id");
+ALTER TABLE "files" ADD FOREIGN KEY ("uploader_id") REFERENCES "users" ("id");
 
-ALTER TABLE "Files" ADD FOREIGN KEY ("user_id") REFERENCES "Users" ("user_id");
+ALTER TABLE "file_shares" ADD FOREIGN KEY ("file_id") REFERENCES "files" ("id");
 
-ALTER TABLE "Secrets" ADD FOREIGN KEY ("secret_id") REFERENCES "Access_Logs" ("secret_or_file_id");
+ALTER TABLE "file_shares" ADD FOREIGN KEY ("sender_id") REFERENCES "users" ("id");
 
-ALTER TABLE "Files" ADD FOREIGN KEY ("file_id") REFERENCES "Access_Logs" ("secret_or_file_id");
+ALTER TABLE "file_shares" ADD FOREIGN KEY ("recipient_id") REFERENCES "users" ("id");
+
+ALTER TABLE "secrets" ADD FOREIGN KEY ("owner_id") REFERENCES "users" ("id");
+
+ALTER TABLE "secret_shares" ADD FOREIGN KEY ("secret_id") REFERENCES "secrets" ("id");
+
+ALTER TABLE "secret_shares" ADD FOREIGN KEY ("sender_id") REFERENCES "users" ("id");
+
+ALTER TABLE "secret_shares" ADD FOREIGN KEY ("recipient_id") REFERENCES "users" ("id");
