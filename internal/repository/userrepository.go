@@ -31,14 +31,11 @@ func NewUserRepository(u domain.User) (*UserRepository, error) {
 
 // CheckUser returns error if the user exists
 func (u *UserRepository) CheckUser() error {
-	// Since we need to defer close everytime we execute a query, we should extract the exec part on another function.
-	defer u.db.Close()
-
 	var username string
 
 	query := `SELECT username FROM users WHERE username = $1`
 
-	fmt.Printf("Executing query: %s\n", query)
+	log.Printf("Executing query: %s\n", query)
 	err := u.db.QueryRow(context.Background(), query, u.Username).Scan(&username)
 
 	if err == nil {
@@ -49,6 +46,26 @@ func (u *UserRepository) CheckUser() error {
 }
 
 func (u *UserRepository) CreateUser() error {
+	defer u.db.Close()
+
+	query := `INSERT INTO users (id, username, email, password_hash, created_at) VALUES ($1, $2, $3, $4, $5)`
+
+	log.Printf("Executing query: %s\n", query)
+	_, err := u.db.Exec(
+		context.Background(),
+		query,
+		u.Id,
+		u.Username,
+		u.Email,
+		u.PasswordHash,
+		u.CreatedAt,
+	)
+
+	if err != nil {
+		log.Println(err.Error())
+		return err
+	}
+
 	return nil
 }
 
