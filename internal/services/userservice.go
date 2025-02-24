@@ -14,6 +14,11 @@ type UserService struct {
 	domain.User // Composition
 }
 
+type UserServiceAuth struct {
+	username string
+	password string
+}
+
 func NewUserService(username string, email string, password string) (*UserService, error) {
 
 	userService := new(UserService)
@@ -79,3 +84,33 @@ func (u *UserService) SignUp() error {
 
 	return nil
 }
+
+// THIS COULD GO TO AN AUTH HANDLER INSTEAD WITH A SPECIFIC STRUCT
+
+//func (u *UserService) Login() error {
+// Create the user repository object
+
+//	log.Println("Connecting to the user repository")
+//	userRepository, err := repository.NewUserRepository(u.User)
+
+//	if err != nil {
+//		log.Println("Failed to instantiate UserRepository")
+//		return err
+//	}
+
+// Get user passwordhash
+
+//	passwordHash, err := userRepository.GetPasswordHash()
+
+//	if err != nil {
+//		log.Println("Failed to get password hash")
+//		return err
+//	}
+
+//	if err := utils.ValidatePassword(u.Password, passwordHash); err != nil {
+//		log.Println("Failed to validate password")
+//		return err
+//	}
+
+//	return nil
+//}

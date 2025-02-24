@@ -14,7 +14,7 @@ func main() {
 		fmt.Fprintf(w, "gosplash!!")
 	})
 
-	mux.HandleFunc("/auth/login", handlers.LoginHandler)
+	mux.HandleFunc("POST /auth/login", handlers.LoginHandler)
 	mux.HandleFunc("/auth/logout", handlers.LogoutHandler)
 	mux.HandleFunc("POST /auth/signup", handlers.SignupHandler)
 

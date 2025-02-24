@@ -16,7 +16,28 @@ type UserDTO struct {
 }
 
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Login")
+	// Bind to user dto
+	userDTO := new(UserDTO)
+
+	if err := json.NewDecoder(r.Body).Decode(&userDTO); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		log.Printf("Could not bind request data to userDTO: %v", err)
+		return
+	}
+
+	log.Println("Processing login request")
+
+	userService, err := services.NewUserService(userDTO.Username, userDTO.Email, userDTO.Password)
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	if err := userService.Login(); err != nil {
+		log.Printf("Failed authentication for user: %s", userDTO.Username)
+		w.WriteHeader(http.StatusUnauthorized)
+	}
 }
 
 func LogoutHandler(w http.ResponseWriter, r *http.Request) {
@@ -30,6 +51,7 @@ func SignupHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err := json.NewDecoder(r.Body).Decode(&userDTO); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
+		log.Printf("Could not bind request data to userDTO: %v", err)
 		return
 	}
 
