@@ -69,6 +69,22 @@ func (u *UserRepository) CreateUser() error {
 	return nil
 }
 
+func (u *UserRepository) GetPasswordHash() (string, error) {
+	var passwordHash string
+
+	query := `SELECT password_hash FROM users WHERE username = $1`
+
+	log.Printf("Executing query: %s\n", query)
+	err := u.db.QueryRow(context.Background(), query, u.Username).Scan(&passwordHash)
+
+	if err != nil {
+		return "", fmt.Errorf("Could not get password hash")
+	}
+	log.Printf("Got password hash %s", passwordHash)
+
+	return passwordHash, nil
+}
+
 // queryExecutor Executes the query safely closing the pool after finishing.
 func queryExector() error {
 	return nil

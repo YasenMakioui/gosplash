@@ -27,14 +27,9 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	log.Println("Processing login request")
 
-	userService, err := services.NewUserService(userDTO.Username, userDTO.Email, userDTO.Password)
+	authService := services.NewAuthService(userDTO.Username, userDTO.Password)
 
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	if err := userService.Login(); err != nil {
+	if err := authService.Login(); err != nil {
 		log.Printf("Failed authentication for user: %s", userDTO.Username)
 		w.WriteHeader(http.StatusUnauthorized)
 	}
