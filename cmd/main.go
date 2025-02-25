@@ -19,7 +19,9 @@ func main() {
 	mux.HandleFunc("/auth/logout", handlers.LogoutHandler)
 	mux.HandleFunc("POST /auth/signup", handlers.SignupHandler)
 
-	stack := middleware.CreateStack()
+	stack := middleware.CreateStack(
+		middleware.Authenticate,
+	)
 
 	http.ListenAndServe(":8080", stack(mux))
 }
