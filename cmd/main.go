@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/YasenMakioui/gosplash/internal/handlers"
+	"github.com/YasenMakioui/gosplash/internal/middleware"
 	"net/http"
 )
 
@@ -18,5 +19,7 @@ func main() {
 	mux.HandleFunc("/auth/logout", handlers.LogoutHandler)
 	mux.HandleFunc("POST /auth/signup", handlers.SignupHandler)
 
-	http.ListenAndServe(":8080", mux)
+	stack := middleware.CreateStack()
+
+	http.ListenAndServe(":8080", stack(mux))
 }
