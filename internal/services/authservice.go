@@ -23,6 +23,7 @@ func NewAuthService(username string, password string) *AuthService {
 }
 
 func (a *AuthService) Login() error {
+
 	// Create the user repository object
 
 	log.Println("Connecting to the user repository")
