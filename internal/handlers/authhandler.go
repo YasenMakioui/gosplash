@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/YasenMakioui/gosplash/internal/config"
 	"github.com/YasenMakioui/gosplash/internal/services"
 	"log"
@@ -55,8 +54,4 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Failed encoding token: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
 	}
-}
-
-func LogoutHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Logout")
 }
