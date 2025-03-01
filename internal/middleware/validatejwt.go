@@ -57,6 +57,7 @@ func ValidateJWT(next http.Handler) http.Handler {
 		log.Println("Token validated")
 
 		ctx := context.WithValue(r.Context(), UserClaimsKey, claims)
+		ctx = context.WithValue(ctx, "username", claims.Username)
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
