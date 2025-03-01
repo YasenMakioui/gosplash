@@ -4,15 +4,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/YasenMakioui/gosplash/internal/services"
-	"github.com/golang-jwt/jwt/v5"
 	"log"
 	"net/http"
-	"time"
 )
 
 type LoginDTO struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
+}
+
+type AccessTokenDTO struct {
+	Token string `json:"token"`
 }
 
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
@@ -27,6 +29,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	log.Println("Processing login request")
 
+	// Get the auth service and log in the user
 	authService := services.NewAuthService(loginDTO.Username, loginDTO.Password)
 
 	if err := authService.Login(); err != nil {
@@ -35,19 +38,11 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	claims := &jwt.MapClaims{
-		"sub": loginDTO.Username,
-		"iss": "gosplash",
-		"aud": "admin",
-		"exp": time.Now().Add(time.Hour * 72).Unix(),
-		"iat": time.Now().Unix(),
-	}
+	var secretKey = []byte("your-secret-key") // Take this from the config
 
-	var secretKey = []byte("your-secret-key")
+	jwtService := services.NewJwtService(secretKey)
 
-	jwtService := services.NewJwtService(secretKey, claims)
-
-	token, err := jwtService.GenerateToken()
+	token, err := jwtService.GenerateToken(loginDTO.Username)
 
 	if err != nil {
 		log.Printf("Failed generating token: %v", err)
@@ -55,7 +50,10 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Fprintf(w, token)
+	if err := json.NewEncoder(w).Encode(&AccessTokenDTO{Token: token}); err != nil {
+		log.Printf("Failed encoding token: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+	}
 }
 
 func LogoutHandler(w http.ResponseWriter, r *http.Request) {

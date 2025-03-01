@@ -14,13 +14,17 @@ func main() {
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "gosplash!!")
 	})
+	
+	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(200)
+	})
 
 	mux.HandleFunc("POST /auth/login", handlers.LoginHandler)
 	mux.HandleFunc("/auth/logout", handlers.LogoutHandler)
 	mux.HandleFunc("POST /auth/signup", handlers.SignupHandler)
 
 	stack := middleware.CreateStack(
-		middleware.Authenticate,
+		middleware.ValidateJWT,
 	)
 
 	http.ListenAndServe(":8080", stack(mux))
