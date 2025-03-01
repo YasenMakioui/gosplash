@@ -1,12 +1,17 @@
 package middleware
 
 import (
+	"context"
 	"github.com/YasenMakioui/gosplash/internal/config"
 	"github.com/YasenMakioui/gosplash/internal/services"
 	"log"
 	"net/http"
 	"strings"
 )
+
+type contextKey string
+
+const UserClaimsKey contextKey = "userClaims"
 
 func ValidateJWT(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -41,7 +46,7 @@ func ValidateJWT(next http.Handler) http.Handler {
 		log.Println("Validating JWT")
 		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
 
-		_, err := jwtService.ValidateToken(tokenString)
+		claims, err := jwtService.ValidateToken(tokenString)
 
 		if err != nil {
 			log.Println("Could not validate token")
@@ -50,6 +55,9 @@ func ValidateJWT(next http.Handler) http.Handler {
 		}
 
 		log.Println("Token validated")
-		next.ServeHTTP(w, r)
+
+		ctx := context.WithValue(r.Context(), UserClaimsKey, claims)
+
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

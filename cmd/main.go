@@ -16,6 +16,7 @@ func main() {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println(r.Context().Value(middleware.UserClaimsKey))
 		fmt.Fprintf(w, "gosplash!!")
 	})
 
