@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/YasenMakioui/gosplash/internal/config"
 	"github.com/YasenMakioui/gosplash/internal/services"
 	"log"
 	"net/http"
@@ -38,7 +39,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var secretKey = []byte("your-secret-key") // Take this from the config
+	var secretKey = config.GetSecretKey()
 
 	jwtService := services.NewJwtService(secretKey)
 
