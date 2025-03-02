@@ -11,18 +11,18 @@ import (
 )
 
 type UserService struct {
-	domain.User                           // Composition
-	repository  repository.UserRepository // Dependency injection
+	repository *repository.UserRepository // Dependency injection
 }
 
-func NewUserService(username string, email string, password string) (*UserService, error) {
+func NewUserService(repository *repository.UserRepository, username string, email string, password string) (*UserService, *domain.User, error) {
 
 	userService := new(UserService)
+	user := new(domain.User)
 
 	// Validate email
 	log.Printf("Checking email: %s", email)
 	if err := utils.ValidateEmail(email); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	// Check if password respects the requirements and hash it
@@ -31,7 +31,7 @@ func NewUserService(username string, email string, password string) (*UserServic
 
 	if err != nil {
 		log.Println("Could not hash password")
-		return nil, err
+		return nil, nil, err
 	}
 
 	// Validate user
@@ -39,40 +39,33 @@ func NewUserService(username string, email string, password string) (*UserServic
 	log.Printf("Checking username: %s", username)
 	if len(username) <= 0 {
 		log.Printf("Username is empty")
-		return nil, fmt.Errorf("username cannot be empty")
+		return nil, nil, fmt.Errorf("username cannot be empty")
 	}
 
 	// Asign values
 
-	userService.Id = uuid.New()
-	userService.Username = username
-	userService.Email = email
-	userService.PasswordHash = passwordHash
-	userService.Role = "user"
-	userService.CreatedAt = time.Now()
+	user.Id = uuid.New()
+	user.Username = username
+	user.Email = email
+	user.PasswordHash = passwordHash
+	user.Role = "user"
+	user.CreatedAt = time.Now()
 
-	userRepository, err := repository.NewUserRepository(userService.User)
+	userService.repository = repository
 
-	if err != nil {
-		log.Println("Could not create user repository")
-		return nil, err
-	}
-
-	userService.repository = *userRepository
-
-	return userService, nil
+	return userService, user, nil
 }
 
-func (u *UserService) SignUp() error {
+func (u *UserService) SignUp(user *domain.User) error {
 	// Check if the user exists
 	log.Println("Checking if user exists")
-	if err := u.repository.CheckUser(); err != nil {
+	if err := u.repository.CheckUser(user); err != nil {
 		return fmt.Errorf("username is already taken")
 	}
 
 	// Create user
 	log.Println("Inserting new user")
-	if err := u.repository.CreateUser(); err != nil {
+	if err := u.repository.CreateUser(user); err != nil {
 		return fmt.Errorf("Could not create user")
 	}
 

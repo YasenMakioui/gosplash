@@ -10,13 +10,12 @@ import (
 )
 
 type UserRepository struct {
-	domain.User
 	// Add db conection here.
 	db *pgxpool.Pool
 }
 
 // Constructor that returns based on the user values
-func NewUserRepository(u domain.User) (*UserRepository, error) {
+func NewUserRepository() (*UserRepository, error) {
 	// Inject the database connection
 	dbConn, err := db.NewDatabaseConnection()
 
@@ -25,18 +24,18 @@ func NewUserRepository(u domain.User) (*UserRepository, error) {
 		return nil, err
 	}
 
-	return &UserRepository{u, dbConn}, nil
+	return &UserRepository{dbConn}, nil
 
 }
 
 // CheckUser returns error if the user exists
-func (u *UserRepository) CheckUser() error {
+func (r *UserRepository) CheckUser(user *domain.User) error {
 	var username string
 
 	query := `SELECT username FROM users WHERE username = $1`
 
 	log.Printf("Executing query: %s\n", query)
-	err := u.db.QueryRow(context.Background(), query, u.Username).Scan(&username)
+	err := r.db.QueryRow(context.Background(), query, user.Username).Scan(&username)
 
 	if err == nil {
 		return fmt.Errorf("user exists")
@@ -45,20 +44,20 @@ func (u *UserRepository) CheckUser() error {
 	return nil
 }
 
-func (u *UserRepository) CreateUser() error {
-	defer u.db.Close()
+func (r *UserRepository) CreateUser(user *domain.User) error {
+	defer r.db.Close()
 
 	query := `INSERT INTO users (id, username, email, password_hash, created_at) VALUES ($1, $2, $3, $4, $5)`
 
 	log.Printf("Executing query: %s\n", query)
-	_, err := u.db.Exec(
+	_, err := r.db.Exec(
 		context.Background(),
 		query,
-		u.Id,
-		u.Username,
-		u.Email,
-		u.PasswordHash,
-		u.CreatedAt,
+		user.Id,
+		user.Username,
+		user.Email,
+		user.PasswordHash,
+		user.CreatedAt,
 	)
 
 	if err != nil {
@@ -69,13 +68,13 @@ func (u *UserRepository) CreateUser() error {
 	return nil
 }
 
-func (u *UserRepository) GetPasswordHash() (string, error) {
+func (r *UserRepository) GetPasswordHash(username string) (string, error) {
 	var passwordHash string
 
 	query := `SELECT password_hash FROM users WHERE username = $1`
 
 	log.Printf("Executing query: %s\n", query)
-	err := u.db.QueryRow(context.Background(), query, u.Username).Scan(&passwordHash)
+	err := r.db.QueryRow(context.Background(), query, username).Scan(&passwordHash)
 
 	if err != nil {
 		return "", fmt.Errorf("Could not get password hash")
