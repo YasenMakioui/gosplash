@@ -11,12 +11,8 @@ import (
 )
 
 type UserService struct {
-	domain.User // Composition
-}
-
-type UserServiceAuth struct {
-	username string
-	password string
+	domain.User                           // Composition
+	repository  repository.UserRepository // Dependency injection
 }
 
 func NewUserService(username string, email string, password string) (*UserService, error) {
@@ -55,30 +51,28 @@ func NewUserService(username string, email string, password string) (*UserServic
 	userService.Role = "user"
 	userService.CreatedAt = time.Now()
 
+	userRepository, err := repository.NewUserRepository(userService.User)
+
+	if err != nil {
+		log.Println("Could not create user repository")
+		return nil, err
+	}
+
+	userService.repository = *userRepository
+
 	return userService, nil
 }
 
 func (u *UserService) SignUp() error {
-
-	// Create the user repository object
-
-	log.Println("Connecting to the user repository")
-	userRepository, err := repository.NewUserRepository(u.User)
-
-	if err != nil {
-		log.Println("Failed to instantiate UserRepository")
-		return err
-	}
-
 	// Check if the user exists
 	log.Println("Checking if user exists")
-	if err := userRepository.CheckUser(); err != nil {
+	if err := u.repository.CheckUser(); err != nil {
 		return fmt.Errorf("username is already taken")
 	}
 
 	// Create user
 	log.Println("Inserting new user")
-	if err := userRepository.CreateUser(); err != nil {
+	if err := u.repository.CreateUser(); err != nil {
 		return fmt.Errorf("Could not create user")
 	}
 

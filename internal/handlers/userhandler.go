@@ -37,12 +37,13 @@ func SignupHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// SignUp the user if the data is correct
-	// If further operations as saving to the database fail or another thing fails we return an internal server error
+	// If further operations as saving to the database fail or another thing fails we return an error
 	if err := userService.SignUp(); err != nil {
 		log.Printf("Aborting user creation due to error: %v\n", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
+	w.WriteHeader(http.StatusCreated)
 	log.Println("User created successfully")
 }

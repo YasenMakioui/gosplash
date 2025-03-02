@@ -30,7 +30,12 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println("Processing login request")
 
 	// Get the auth service and log in the user
-	authService := services.NewAuthService(loginDTO.Username, loginDTO.Password)
+	authService, err := services.NewAuthService(loginDTO.Username, loginDTO.Password)
+
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		log.Printf("Could not bind request data to userDTO: %v", err)
+	}
 
 	if err := authService.Login(); err != nil {
 		log.Printf("Failed authentication for user: %s", loginDTO.Username)

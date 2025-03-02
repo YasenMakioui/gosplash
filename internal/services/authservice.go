@@ -9,17 +9,27 @@ import (
 
 type AuthService struct {
 	domain.User
-	Password string // plain password
+	Password   string // plain password
+	repository repository.UserRepository
 }
 
-func NewAuthService(username string, password string) *AuthService {
+func NewAuthService(username string, password string) (*AuthService, error) {
 
 	authService := new(AuthService)
 
 	authService.Username = username
 	authService.Password = password
 
-	return authService
+	userRepository, err := repository.NewUserRepository(authService.User)
+
+	if err != nil {
+		log.Println("Failed to instantiate UserRepository")
+		return authService, err
+	}
+
+	authService.repository = *userRepository
+
+	return authService, nil
 }
 
 func (a *AuthService) Login() error {
