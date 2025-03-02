@@ -37,7 +37,13 @@ func SignupHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println("Processing signup request")
 
 	// using the userdto attributes create a new user service object
-	userService, user, err := services.NewUserService(userRepository, userDTO.Username, userDTO.Email, userDTO.Password)
+	user, err := services.NewUser(userDTO.Username, userDTO.Email, userDTO.Password)
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+	}
+
+	userService, err := services.NewUserService(userRepository)
 
 	// If the email is bad, the password is bad length or other validations fail, we get an error
 	if err != nil {

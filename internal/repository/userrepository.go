@@ -84,6 +84,21 @@ func (r *UserRepository) GetPasswordHash(username string) (string, error) {
 	return passwordHash, nil
 }
 
+func (r *UserRepository) GetUUID(username string) (string, error) {
+	var uuid string
+
+	query := `SELECT id FROM users WHERE username = $1`
+
+	log.Printf("Executing query: %s\n", query)
+	err := r.db.QueryRow(context.Background(), query, username).Scan(&uuid)
+
+	if err != nil {
+		return uuid, fmt.Errorf("Could not get uuid")
+	}
+
+	return uuid, nil
+}
+
 // queryExecutor Executes the query safely closing the pool after finishing.
 func queryExector() error {
 	return nil

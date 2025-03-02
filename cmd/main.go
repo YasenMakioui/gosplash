@@ -6,10 +6,47 @@ import (
 	"github.com/YasenMakioui/gosplash/internal/config"
 	"github.com/YasenMakioui/gosplash/internal/handlers"
 	"github.com/YasenMakioui/gosplash/internal/middleware"
+	"github.com/YasenMakioui/gosplash/internal/repository"
+	"github.com/YasenMakioui/gosplash/internal/services"
+	"log"
 	"net/http"
 )
 
+func setupFileHandler() (*handlers.FileHandler, error) {
+	fileRepository, err := repository.NewFileRepository()
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fileService, err := services.NewFileService(fileRepository)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	userRepository, err := repository.NewUserRepository()
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	userService, err := services.NewUserService(userRepository)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return handlers.NewFileHandler(userService, fileService), nil
+}
+
 func main() {
+
+	fileHandler, err := setupFileHandler()
+
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// Check required environment variables
 	config.CheckConfig()
@@ -32,7 +69,7 @@ func main() {
 	mux.HandleFunc("POST /auth/login", handlers.LoginHandler)
 	mux.HandleFunc("POST /auth/signup", handlers.SignupHandler)
 
-	//mux.HandleFunc("GET /files", handlers.GetFilesHandler)
+	mux.HandleFunc("GET /files", fileHandler.GetFiles)
 
 	stack := middleware.CreateStack(
 		middleware.ValidateJWT,

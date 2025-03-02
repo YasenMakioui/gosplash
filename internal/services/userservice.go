@@ -11,18 +11,24 @@ import (
 )
 
 type UserService struct {
-	repository *repository.UserRepository // Dependency injection
+	Repository *repository.UserRepository // Dependency injection
 }
 
-func NewUserService(repository *repository.UserRepository, username string, email string, password string) (*UserService, *domain.User, error) {
+func NewUserService(repository *repository.UserRepository) (*UserService, error) {
 
 	userService := new(UserService)
+	userService.Repository = repository
+
+	return userService, nil
+}
+
+func NewUser(username string, email string, password string) (*domain.User, error) {
 	user := new(domain.User)
 
 	// Validate email
 	log.Printf("Checking email: %s", email)
 	if err := utils.ValidateEmail(email); err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	// Check if password respects the requirements and hash it
@@ -31,7 +37,7 @@ func NewUserService(repository *repository.UserRepository, username string, emai
 
 	if err != nil {
 		log.Println("Could not hash password")
-		return nil, nil, err
+		return nil, err
 	}
 
 	// Validate user
@@ -39,7 +45,7 @@ func NewUserService(repository *repository.UserRepository, username string, emai
 	log.Printf("Checking username: %s", username)
 	if len(username) <= 0 {
 		log.Printf("Username is empty")
-		return nil, nil, fmt.Errorf("username cannot be empty")
+		return nil, fmt.Errorf("username cannot be empty")
 	}
 
 	// Asign values
@@ -51,23 +57,31 @@ func NewUserService(repository *repository.UserRepository, username string, emai
 	user.Role = "user"
 	user.CreatedAt = time.Now()
 
-	userService.repository = repository
-
-	return userService, user, nil
+	return user, nil
 }
 
 func (u *UserService) SignUp(user *domain.User) error {
 	// Check if the user exists
 	log.Println("Checking if user exists")
-	if err := u.repository.CheckUser(user); err != nil {
+	if err := u.Repository.CheckUser(user); err != nil {
 		return fmt.Errorf("username is already taken")
 	}
 
 	// Create user
 	log.Println("Inserting new user")
-	if err := u.repository.CreateUser(user); err != nil {
+	if err := u.Repository.CreateUser(user); err != nil {
 		return fmt.Errorf("Could not create user")
 	}
 
 	return nil
+}
+
+func (u *UserService) GetUserUUID(username string) (string, error) {
+	userUUID, err := u.Repository.GetUUID(username)
+
+	if err != nil {
+		return "", err
+	}
+
+	return userUUID, nil
 }
