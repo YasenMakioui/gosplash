@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"github.com/YasenMakioui/gosplash/internal/repository"
 	"github.com/YasenMakioui/gosplash/internal/services"
 	"log"
 	"net/http"
@@ -15,7 +14,15 @@ type UserDTO struct {
 	Password string `json:"password"`
 }
 
-func SignupHandler(w http.ResponseWriter, r *http.Request) {
+type UserHandler struct {
+	UserService *services.UserService
+}
+
+func NewUserHandler(userService *services.UserService) *UserHandler {
+	return &UserHandler{UserService: userService}
+}
+
+func (u *UserHandler) Signup(w http.ResponseWriter, r *http.Request) {
 
 	// Collect data and encode it to the userdto
 	userDTO := new(UserDTO)
@@ -24,14 +31,6 @@ func SignupHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		log.Printf("Could not bind request data to userDTO: %v", err)
 		return
-	}
-
-	// Create user repository
-
-	userRepository, err := repository.NewUserRepository()
-
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
 	}
 
 	log.Println("Processing signup request")
@@ -43,8 +42,6 @@ func SignupHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 
-	userService, err := services.NewUserService(userRepository)
-
 	// If the email is bad, the password is bad length or other validations fail, we get an error
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -53,7 +50,7 @@ func SignupHandler(w http.ResponseWriter, r *http.Request) {
 
 	// SignUp the user if the data is correct
 	// If further operations as saving to the database fail or another thing fails we return an error
-	if err := userService.SignUp(user); err != nil {
+	if err := u.UserService.SignUp(user); err != nil {
 		log.Printf("Aborting user creation due to error: %v\n", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
