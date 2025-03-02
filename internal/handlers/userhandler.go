@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"github.com/YasenMakioui/gosplash/internal/repository"
 	"github.com/YasenMakioui/gosplash/internal/services"
 	"log"
 	"net/http"
@@ -25,10 +26,18 @@ func SignupHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Create user repository
+
+	userRepository, err := repository.NewUserRepository()
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+	}
+
 	log.Println("Processing signup request")
 
 	// using the userdto attributes create a new user service object
-	userService, err := services.NewUserService(userDTO.Username, userDTO.Email, userDTO.Password)
+	userService, user, err := services.NewUserService(userRepository, userDTO.Username, userDTO.Email, userDTO.Password)
 
 	// If the email is bad, the password is bad length or other validations fail, we get an error
 	if err != nil {
@@ -38,7 +47,7 @@ func SignupHandler(w http.ResponseWriter, r *http.Request) {
 
 	// SignUp the user if the data is correct
 	// If further operations as saving to the database fail or another thing fails we return an error
-	if err := userService.SignUp(); err != nil {
+	if err := userService.SignUp(user); err != nil {
 		log.Printf("Aborting user creation due to error: %v\n", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return

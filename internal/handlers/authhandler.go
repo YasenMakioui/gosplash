@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"github.com/YasenMakioui/gosplash/internal/config"
+	"github.com/YasenMakioui/gosplash/internal/repository"
 	"github.com/YasenMakioui/gosplash/internal/services"
 	"log"
 	"net/http"
@@ -18,6 +19,12 @@ type AccessTokenDTO struct {
 }
 
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
+
+	userRepository, err := repository.NewUserRepository()
+
+	if err != nil {
+		log.Println(err)
+	}
 	// Bind to user dto
 	loginDTO := new(LoginDTO)
 
@@ -30,7 +37,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println("Processing login request")
 
 	// Get the auth service and log in the user
-	authService, err := services.NewAuthService(loginDTO.Username, loginDTO.Password)
+	authService, err := services.NewAuthService(userRepository, loginDTO.Username, loginDTO.Password)
 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
