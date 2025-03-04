@@ -18,7 +18,15 @@ type AccessTokenDTO struct {
 	Token string `json:"token"`
 }
 
-func LoginHandler(w http.ResponseWriter, r *http.Request) {
+type AuthHandler struct {
+	AuthService *services.AuthService
+}
+
+func NewAuthHandler(authService *services.AuthService) *AuthHandler {
+	return &AuthHandler{AuthService: authService}
+}
+
+func (a *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	userRepository, err := repository.NewUserRepository()
 
@@ -37,14 +45,14 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println("Processing login request")
 
 	// Get the auth service and log in the user
-	authService, err := services.NewAuthService(userRepository, loginDTO.Username, loginDTO.Password)
+	authService, err := services.NewAuthService(userRepository)
 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		log.Printf("Could not bind request data to userDTO: %v", err)
 	}
 
-	if err := authService.Login(); err != nil {
+	if err := authService.Login(loginDTO.Username, loginDTO.Password); err != nil {
 		log.Printf("Failed authentication for user: %s", loginDTO.Username)
 		w.WriteHeader(http.StatusUnauthorized)
 		return

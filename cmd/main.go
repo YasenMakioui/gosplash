@@ -40,9 +40,42 @@ func setupFileHandler() (*handlers.FileHandler, error) {
 	return handlers.NewFileHandler(userService, fileService), nil
 }
 
+func setupUserHandler() (*handlers.UserHandler, error) {
+	userRepository, err := repository.NewUserRepository()
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	userService, err := services.NewUserService(userRepository)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return handlers.NewUserHandler(userService), nil
+}
+
+func setupAuthHandler() (*handlers.AuthHandler, error) {
+	userRepository, err := repository.NewUserRepository()
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	authService, err := services.NewAuthService(userRepository)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return handlers.NewAuthHandler(authService), nil
+}
+
 func main() {
 
 	fileHandler, err := setupFileHandler()
+	userHandler, err := setupUserHandler()
+	authHandler, err := setupAuthHandler()
 
 	if err != nil {
 		log.Fatal(err)
@@ -66,8 +99,8 @@ func main() {
 		w.WriteHeader(200)
 	})
 
-	mux.HandleFunc("POST /auth/login", handlers.LoginHandler)
-	mux.HandleFunc("POST /auth/signup", handlers.SignupHandler)
+	mux.HandleFunc("POST /auth/login", authHandler.LoginHandler)
+	mux.HandleFunc("POST /auth/signup", userHandler.Signup)
 
 	mux.HandleFunc("GET /files", fileHandler.GetFiles)
 
