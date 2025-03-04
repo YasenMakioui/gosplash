@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"github.com/YasenMakioui/gosplash/internal/services"
+	"log"
 	"net/http"
 	"time"
 )
@@ -26,10 +27,6 @@ func NewFileHandler(userService *services.UserService, fileService *services.Fil
 	}
 }
 
-func (f *FileHandler) UploadFile(w http.ResponseWriter, r *http.Request) {
-
-}
-
 func (f *FileHandler) GetFiles(w http.ResponseWriter, r *http.Request) {
 	username, ok := r.Context().Value("username").(string)
 	if !ok {
@@ -50,4 +47,38 @@ func (f *FileHandler) GetFiles(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(files)
+}
+
+func (f *FileHandler) UploadFile(w http.ResponseWriter, r *http.Request) {
+	const maxUploadSize = 50 << 30 // 50GB todo change to env
+
+	username, ok := r.Context().Value("username").(string)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	userId, err := f.UserService.GetUserUUID(username)
+
+	r.Body = http.MaxBytesReader(w, r.Body, maxUploadSize)
+
+	file, handler, err := r.FormFile("file")
+
+	if err != nil {
+		http.Error(w, "Failed to retrieve the file", http.StatusBadRequest)
+		return
+	}
+
+	if handler.Size > maxUploadSize {
+		http.Error(w, "File too big", http.StatusBadRequest)
+	}
+
+	uploadedFile, err := f.FileService.UploadFile(userId, file, handler)
+
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Failed to upload file", http.StatusInternalServerError)
+	}
+
+	json.NewEncoder(w).Encode(uploadedFile)
 }

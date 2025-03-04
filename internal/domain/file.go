@@ -1,13 +1,12 @@
 package domain
 
 import (
-	"github.com/google/uuid"
 	"time"
 )
 
 type File struct {
-	Id            uuid.UUID
-	UploaderId    uuid.UUID
+	Id            string
+	UploaderId    string
 	FileName      string
 	FileSize      int64
 	StoragePath   string

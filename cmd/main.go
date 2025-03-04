@@ -103,6 +103,7 @@ func main() {
 	mux.HandleFunc("POST /auth/signup", userHandler.Signup)
 
 	mux.HandleFunc("GET /files", fileHandler.GetFiles)
+	mux.HandleFunc("POST /files", fileHandler.UploadFile)
 
 	stack := middleware.CreateStack(
 		middleware.ValidateJWT,
