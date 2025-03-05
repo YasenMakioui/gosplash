@@ -44,6 +44,28 @@ func (f *FileService) GetFile(fileId string, userId string) (domain.File, error)
 	return file, nil
 }
 
+func (f *FileService) DeleteFile(fileId string, userId string) error {
+
+	file, err := f.GetFile(fileId, userId)
+
+	if err != nil {
+		return err
+	}
+
+	if err := os.RemoveAll(path.Dir(file.StoragePath)); err != nil {
+		log.Println(err)
+		return err
+	}
+	log.Println("Deleted file ", fileId, " from storage")
+
+	if err := f.Repository.Delete(fileId, userId); err != nil {
+		return err
+	}
+	log.Println("Deleted file ", fileId, " from database")
+
+	return nil
+}
+
 func (f *FileService) UploadFile(userId string, uploadedFile multipart.File, handler *multipart.FileHeader) (domain.File, error) {
 	fileId := uuid.New().String()
 	absolutePath := path.Join("/tmp", "gosplash", fileId, handler.Filename)

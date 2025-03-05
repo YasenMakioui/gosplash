@@ -88,9 +88,21 @@ func (r *FileRepository) GetFile(fileId string, userId string) (domain.File, err
 	return file, nil
 }
 
-func (r *FileRepository) Save(file domain.File) error {
-	defer r.db.Close()
+func (r *FileRepository) Delete(fileId string, userId string) error {
+	query := `DELETE FROM files WHERE id = $1 AND uploader_id = $2`
 
+	_, err := r.db.Query(context.Background(), query, fileId, userId)
+
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
+	return nil
+}
+
+func (r *FileRepository) Save(file domain.File) error {
+	
 	query := `INSERT INTO files (id, uploader_id, file_name, file_size, storage_path, expires_at, max_downloads, downloads, encryption_key, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`
 
 	log.Printf("Executing query: %s\n", query)

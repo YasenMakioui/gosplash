@@ -38,12 +38,14 @@ func (f *FileHandler) GetFiles(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		http.Error(w, "Could not get user id", http.StatusInternalServerError)
+		return
 	}
 
 	files, err := f.FileService.GetUserFiles(userId)
 
 	if err != nil {
 		http.Error(w, "Could not get user files", http.StatusInternalServerError)
+		return
 	}
 
 	json.NewEncoder(w).Encode(files)
@@ -97,6 +99,7 @@ func (f *FileHandler) GetFile(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		http.Error(w, "Could not get user id", http.StatusInternalServerError)
+		return
 	}
 
 	log.Printf("Getting file %s from user %s", fileId, userId)
@@ -105,7 +108,33 @@ func (f *FileHandler) GetFile(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		http.Error(w, "Failed to retrieve the file", http.StatusNotFound)
+		return
 	}
 
 	json.NewEncoder(w).Encode(file)
+}
+
+func (f *FileHandler) DeleteFile(w http.ResponseWriter, r *http.Request) {
+	username, ok := r.Context().Value("username").(string)
+
+	fileId := r.PathValue("fileId")
+
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	userId, err := f.UserService.GetUserUUID(username)
+
+	if err != nil {
+		http.Error(w, "Could not get user id", http.StatusInternalServerError)
+		return
+	}
+
+	log.Printf("Deleting file %s from user %s", fileId, userId)
+
+	if err := f.FileService.DeleteFile(fileId, userId); err != nil {
+		http.Error(w, "Failed to delete file", http.StatusInternalServerError)
+		return
+	}
 }
