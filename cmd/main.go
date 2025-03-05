@@ -104,6 +104,7 @@ func main() {
 
 	mux.HandleFunc("GET /files", fileHandler.GetFiles)
 	mux.HandleFunc("POST /files", fileHandler.UploadFile)
+	mux.HandleFunc("GET /files/{fileId}/metadata", fileHandler.GetFile)
 
 	stack := middleware.CreateStack(
 		middleware.ValidateJWT,

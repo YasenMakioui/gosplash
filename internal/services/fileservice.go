@@ -34,6 +34,16 @@ func (f *FileService) GetUserFiles(userId string) ([]domain.File, error) {
 	return files, nil
 }
 
+func (f *FileService) GetFile(fileId string, userId string) (domain.File, error) {
+	file, err := f.Repository.GetFile(fileId, userId)
+
+	if err != nil {
+		return domain.File{}, err
+	}
+
+	return file, nil
+}
+
 func (f *FileService) UploadFile(userId string, uploadedFile multipart.File, handler *multipart.FileHeader) (domain.File, error) {
 	fileId := uuid.New().String()
 	absolutePath := path.Join("/tmp", "gosplash", fileId, handler.Filename)

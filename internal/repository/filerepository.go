@@ -61,6 +61,33 @@ func (r *FileRepository) GetFiles(userId string) ([]domain.File, error) {
 	return files, nil
 }
 
+func (r *FileRepository) GetFile(fileId string, userId string) (domain.File, error) {
+	var file domain.File
+
+	query := `SELECT * FROM files WHERE id = $1 AND uploader_id = $2`
+	log.Printf("Executing query: SELECT * FROM files WHERE id = %s AND uploader_id = %s", fileId, userId)
+
+	err := r.db.QueryRow(context.Background(), query, fileId, userId).Scan(
+		&file.Id,
+		&file.UploaderId,
+		&file.FileName,
+		&file.FileSize,
+		&file.StoragePath,
+		&file.ExpiresAt,
+		&file.MaxDownloads,
+		&file.Downloads,
+		&file.EncryptionKey,
+		&file.CreatedAt,
+	)
+
+	if err != nil {
+		log.Println(err)
+		return file, err
+	}
+
+	return file, nil
+}
+
 func (r *FileRepository) Save(file domain.File) error {
 	defer r.db.Close()
 

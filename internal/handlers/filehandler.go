@@ -82,3 +82,30 @@ func (f *FileHandler) UploadFile(w http.ResponseWriter, r *http.Request) {
 
 	json.NewEncoder(w).Encode(uploadedFile)
 }
+
+func (f *FileHandler) GetFile(w http.ResponseWriter, r *http.Request) {
+	username, ok := r.Context().Value("username").(string)
+
+	fileId := r.PathValue("fileId")
+
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	userId, err := f.UserService.GetUserUUID(username)
+
+	if err != nil {
+		http.Error(w, "Could not get user id", http.StatusInternalServerError)
+	}
+
+	log.Printf("Getting file %s from user %s", fileId, userId)
+
+	file, err := f.FileService.GetFile(fileId, userId)
+
+	if err != nil {
+		http.Error(w, "Failed to retrieve the file", http.StatusNotFound)
+	}
+
+	json.NewEncoder(w).Encode(file)
+}
