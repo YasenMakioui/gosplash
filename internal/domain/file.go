@@ -4,6 +4,7 @@ import (
 	"time"
 )
 
+// File represents a file in the filesystem.
 type File struct {
 	Id            string
 	UploaderId    string

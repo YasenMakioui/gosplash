@@ -5,6 +5,7 @@ import (
 	"time"
 )
 
+// User represents the user saved in the database
 type User struct {
 	Id           uuid.UUID
 	Username     string

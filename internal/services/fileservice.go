@@ -16,12 +16,8 @@ type FileService struct {
 	Repository *repository.FileRepository
 }
 
-func NewFileService(repository *repository.FileRepository) (*FileService, error) {
-
-	fileService := new(FileService)
-	fileService.Repository = repository
-
-	return fileService, nil
+func NewFileService(repository *repository.FileRepository) *FileService {
+	return &FileService{Repository: repository}
 }
 
 func (f *FileService) GetUserFiles(userId string) ([]domain.File, error) {

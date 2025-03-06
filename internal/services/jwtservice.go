@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+	"github.com/YasenMakioui/gosplash/internal/config"
 	"github.com/golang-jwt/jwt/v5"
 	"time"
 )
@@ -15,9 +16,11 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
-func NewJwtService(secret []byte) *JwtService {
+func NewJwtService() *JwtService {
+	jwtSecret := config.GetSecretKey()
+
 	return &JwtService{
-		Secret: secret,
+		Secret: jwtSecret,
 	}
 }
 

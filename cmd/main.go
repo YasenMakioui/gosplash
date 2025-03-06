@@ -1,103 +1,83 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
 	"github.com/YasenMakioui/gosplash/internal/config"
 	"github.com/YasenMakioui/gosplash/internal/handlers"
+	"github.com/YasenMakioui/gosplash/internal/logger"
 	"github.com/YasenMakioui/gosplash/internal/middleware"
 	"github.com/YasenMakioui/gosplash/internal/repository"
 	"github.com/YasenMakioui/gosplash/internal/services"
-	"log"
+	"log/slog"
 	"net/http"
+	"os"
 )
 
-func setupFileHandler() (*handlers.FileHandler, error) {
+func setupFileHandler() *handlers.FileHandler {
 	fileRepository, err := repository.NewFileRepository()
-
 	if err != nil {
-		log.Fatal(err)
+		slog.Error(err.Error())
 	}
 
-	fileService, err := services.NewFileService(fileRepository)
-
-	if err != nil {
-		log.Fatal(err)
-	}
+	fileService := services.NewFileService(fileRepository)
 
 	userRepository, err := repository.NewUserRepository()
-
 	if err != nil {
-		log.Fatal(err)
+		slog.Error(err.Error())
 	}
 
-	userService, err := services.NewUserService(userRepository)
+	userService := services.NewUserService(userRepository)
 
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return handlers.NewFileHandler(userService, fileService), nil
+	return handlers.NewFileHandler(userService, fileService)
 }
 
-func setupUserHandler() (*handlers.UserHandler, error) {
+func setupUserHandler() *handlers.UserHandler {
 	userRepository, err := repository.NewUserRepository()
-
 	if err != nil {
-		log.Fatal(err)
+		slog.Error(err.Error())
 	}
 
-	userService, err := services.NewUserService(userRepository)
+	userService := services.NewUserService(userRepository)
 
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return handlers.NewUserHandler(userService), nil
+	return handlers.NewUserHandler(userService)
 }
 
-func setupAuthHandler() (*handlers.AuthHandler, error) {
+func setupAuthHandler() *handlers.AuthHandler {
 	userRepository, err := repository.NewUserRepository()
-
 	if err != nil {
-		log.Fatal(err)
+		slog.Error(err.Error())
 	}
 
-	authService, err := services.NewAuthService(userRepository)
-	if err != nil {
-		log.Fatal(err)
-	}
+	authService := services.NewAuthService(userRepository)
+	jwtService := services.NewJwtService()
 
-	return handlers.NewAuthHandler(authService), nil
+	return handlers.NewAuthHandler(authService, jwtService)
+}
+
+func setupHealthHandler() *handlers.HealthHandler {
+	return handlers.NewHealthHandler()
 }
 
 func main() {
 
-	fileHandler, err := setupFileHandler()
-	userHandler, err := setupUserHandler()
-	authHandler, err := setupAuthHandler()
+	// Setup logger
 
-	if err != nil {
-		log.Fatal(err)
-	}
+	logger.SetupLogger()
+
+	// Setup handlers. If one of them fails, the program won't start
+	fileHandler := setupFileHandler()
+	userHandler := setupUserHandler()
+	authHandler := setupAuthHandler()
+	healthHandler := setupHealthHandler()
 
 	// Check required environment variables
 	config.CheckConfig()
 
+	// Routes
+
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println(r.Context().Value(middleware.UserClaimsKey))
-		resp := make(map[string]interface{})
-		resp["message"] = "gosplash!"
-		resp["status"] = http.StatusOK
-		resp["user"] = r.Context().Value("username")
-		json.NewEncoder(w).Encode(resp)
-	})
-
-	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(200)
-	})
+	mux.HandleFunc("/", handlers.RootHandler)
+	mux.HandleFunc("/healthz", healthHandler.CheckServerStatus)
 
 	mux.HandleFunc("POST /auth/login", authHandler.LoginHandler)
 	mux.HandleFunc("POST /auth/signup", userHandler.Signup)
@@ -111,5 +91,8 @@ func main() {
 		middleware.ValidateJWT,
 	)
 
-	http.ListenAndServe(":8080", stack(mux))
+	if err := http.ListenAndServe(":8080", stack(mux)); err != nil {
+		slog.Error(err.Error())
+		os.Exit(1)
+	}
 }

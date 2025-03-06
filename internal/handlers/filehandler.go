@@ -3,7 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"github.com/YasenMakioui/gosplash/internal/services"
-	"log"
+	"log/slog"
 	"net/http"
 	"time"
 )
@@ -20,7 +20,6 @@ type FileHandler struct {
 }
 
 func NewFileHandler(userService *services.UserService, fileService *services.FileService) *FileHandler {
-
 	return &FileHandler{
 		UserService: userService,
 		FileService: fileService,
@@ -29,7 +28,9 @@ func NewFileHandler(userService *services.UserService, fileService *services.Fil
 
 func (f *FileHandler) GetFiles(w http.ResponseWriter, r *http.Request) {
 	username, ok := r.Context().Value("username").(string)
+
 	if !ok {
+		slog.Error("Couldn't get username from context")
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
@@ -37,6 +38,7 @@ func (f *FileHandler) GetFiles(w http.ResponseWriter, r *http.Request) {
 	userId, err := f.UserService.GetUserUUID(username)
 
 	if err != nil {
+		slog.Error("Couldn't get UUID from user", "username", username, "err", err)
 		http.Error(w, "Could not get user id", http.StatusInternalServerError)
 		return
 	}
@@ -44,11 +46,15 @@ func (f *FileHandler) GetFiles(w http.ResponseWriter, r *http.Request) {
 	files, err := f.FileService.GetUserFiles(userId)
 
 	if err != nil {
+		slog.Error("Couldn't get files from user", "username", username, "err", err)
 		http.Error(w, "Could not get user files", http.StatusInternalServerError)
 		return
 	}
 
-	json.NewEncoder(w).Encode(files)
+	if err := json.NewEncoder(w).Encode(files); err != nil {
+		slog.Error("Couldn't encode files to JSON", "username", username, "err", err)
+		w.WriteHeader(http.StatusInternalServerError)
+	}
 }
 
 func (f *FileHandler) UploadFile(w http.ResponseWriter, r *http.Request) {
@@ -56,6 +62,7 @@ func (f *FileHandler) UploadFile(w http.ResponseWriter, r *http.Request) {
 
 	username, ok := r.Context().Value("username").(string)
 	if !ok {
+		slog.Error("Couldn't get username from context")
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
@@ -67,22 +74,27 @@ func (f *FileHandler) UploadFile(w http.ResponseWriter, r *http.Request) {
 	file, handler, err := r.FormFile("file")
 
 	if err != nil {
+		slog.Error("Couldn't get file from form", "username", username, "err", err)
 		http.Error(w, "Failed to retrieve the file", http.StatusBadRequest)
 		return
 	}
 
 	if handler.Size > maxUploadSize {
 		http.Error(w, "File too big", http.StatusBadRequest)
+		return
 	}
 
 	uploadedFile, err := f.FileService.UploadFile(userId, file, handler)
 
 	if err != nil {
-		log.Println(err)
+		slog.Error(err.Error())
 		http.Error(w, "Failed to upload file", http.StatusInternalServerError)
 	}
 
-	json.NewEncoder(w).Encode(uploadedFile)
+	if err := json.NewEncoder(w).Encode(uploadedFile); err != nil {
+		slog.Error(err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+	}
 }
 
 func (f *FileHandler) GetFile(w http.ResponseWriter, r *http.Request) {
@@ -91,6 +103,7 @@ func (f *FileHandler) GetFile(w http.ResponseWriter, r *http.Request) {
 	fileId := r.PathValue("fileId")
 
 	if !ok {
+		slog.Error("Couldn't get username from context")
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
@@ -98,20 +111,25 @@ func (f *FileHandler) GetFile(w http.ResponseWriter, r *http.Request) {
 	userId, err := f.UserService.GetUserUUID(username)
 
 	if err != nil {
+		slog.Error("Couldn't get UUID from user", "username", username, "err", err)
 		http.Error(w, "Could not get user id", http.StatusInternalServerError)
 		return
 	}
 
-	log.Printf("Getting file %s from user %s", fileId, userId)
+	slog.Debug("Getting file %s from user %s", "fileId", fileId, "userId", userId)
 
 	file, err := f.FileService.GetFile(fileId, userId)
 
 	if err != nil {
-		http.Error(w, "Failed to retrieve the file", http.StatusNotFound)
+		slog.Debug("Couldn't get the file", "fileId", fileId, "userId", userId, "err", err)
+		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
-	json.NewEncoder(w).Encode(file)
+	if err := json.NewEncoder(w).Encode(file); err != nil {
+		slog.Error(err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+	}
 }
 
 func (f *FileHandler) DeleteFile(w http.ResponseWriter, r *http.Request) {
@@ -120,6 +138,7 @@ func (f *FileHandler) DeleteFile(w http.ResponseWriter, r *http.Request) {
 	fileId := r.PathValue("fileId")
 
 	if !ok {
+		slog.Error("Couldn't get username from context")
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
@@ -127,14 +146,16 @@ func (f *FileHandler) DeleteFile(w http.ResponseWriter, r *http.Request) {
 	userId, err := f.UserService.GetUserUUID(username)
 
 	if err != nil {
+		slog.Error("Couldn't get UUID from user", "username", username, "err", err)
 		http.Error(w, "Could not get user id", http.StatusInternalServerError)
 		return
 	}
 
-	log.Printf("Deleting file %s from user %s", fileId, userId)
+	slog.Debug("Deleting file %s from user %s", fileId, userId)
 
 	if err := f.FileService.DeleteFile(fileId, userId); err != nil {
-		http.Error(w, "Failed to delete file", http.StatusInternalServerError)
+		slog.Error(err.Error())
+		http.Error(w, "Could not delete file", http.StatusInternalServerError)
 		return
 	}
 }

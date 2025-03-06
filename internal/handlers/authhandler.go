@@ -2,10 +2,8 @@ package handlers
 
 import (
 	"encoding/json"
-	"github.com/YasenMakioui/gosplash/internal/config"
-	"github.com/YasenMakioui/gosplash/internal/repository"
 	"github.com/YasenMakioui/gosplash/internal/services"
-	"log"
+	"log/slog"
 	"net/http"
 )
 
@@ -20,58 +18,40 @@ type AccessTokenDTO struct {
 
 type AuthHandler struct {
 	AuthService *services.AuthService
+	JwtService  *services.JwtService
 }
 
-func NewAuthHandler(authService *services.AuthService) *AuthHandler {
-	return &AuthHandler{AuthService: authService}
+func NewAuthHandler(authService *services.AuthService, jwtService *services.JwtService) *AuthHandler {
+	return &AuthHandler{AuthService: authService, JwtService: jwtService}
 }
 
 func (a *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
-
-	userRepository, err := repository.NewUserRepository()
-
-	if err != nil {
-		log.Println(err)
-	}
-	// Bind to user dto
 	loginDTO := new(LoginDTO)
 
 	if err := json.NewDecoder(r.Body).Decode(&loginDTO); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		log.Printf("Could not bind request data to userDTO: %v", err)
+		slog.Debug("Could not bind request data to userDTO", "err", err.Error())
 		return
 	}
 
-	log.Println("Processing login request")
+	slog.Debug("Processing login request", "username", loginDTO.Username)
 
-	// Get the auth service and log in the user
-	authService, err := services.NewAuthService(userRepository)
-
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		log.Printf("Could not bind request data to userDTO: %v", err)
-	}
-
-	if err := authService.Login(loginDTO.Username, loginDTO.Password); err != nil {
-		log.Printf("Failed authentication for user: %s", loginDTO.Username)
+	if err := a.AuthService.Login(loginDTO.Username, loginDTO.Password); err != nil {
+		slog.Debug("Failed authentication for user: %s", "username", loginDTO.Username, "err", err)
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 
-	var secretKey = config.GetSecretKey()
-
-	jwtService := services.NewJwtService(secretKey)
-
-	token, err := jwtService.GenerateToken(loginDTO.Username)
+	token, err := a.JwtService.GenerateToken(loginDTO.Username)
 
 	if err != nil {
-		log.Printf("Failed generating token: %v", err)
+		slog.Debug("Failed generating token", "username", loginDTO.Username, "err", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	if err := json.NewEncoder(w).Encode(&AccessTokenDTO{Token: token}); err != nil {
-		log.Printf("Failed encoding token: %v", err)
+		slog.Debug("Failed encoding token", "username", loginDTO.Username, "err", err)
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 }

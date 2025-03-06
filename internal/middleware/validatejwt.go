@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"context"
-	"github.com/YasenMakioui/gosplash/internal/config"
 	"github.com/YasenMakioui/gosplash/internal/services"
 	"log"
 	"net/http"
@@ -31,9 +30,8 @@ func ValidateJWT(next http.Handler) http.Handler {
 				return
 			}
 		}
-
-		var secretKey = config.GetSecretKey()
-		jwtService := services.NewJwtService(secretKey)
+		
+		jwtService := services.NewJwtService()
 
 		authHeader := r.Header.Get("Authorization")
 

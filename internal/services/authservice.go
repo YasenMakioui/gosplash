@@ -7,23 +7,18 @@ import (
 )
 
 type AuthService struct {
-	repository *repository.UserRepository
+	Repository *repository.UserRepository
 }
 
-func NewAuthService(userRepository *repository.UserRepository) (*AuthService, error) {
-
-	authService := new(AuthService)
-
-	authService.repository = userRepository
-
-	return authService, nil
+func NewAuthService(userRepository *repository.UserRepository) *AuthService {
+	return &AuthService{Repository: userRepository}
 }
 
 func (a *AuthService) Login(username string, password string) error {
 
 	// Get user passwordhash
 
-	passwordHash, err := a.repository.GetPasswordHash(username)
+	passwordHash, err := a.Repository.GetPasswordHash(username)
 
 	if err != nil {
 		log.Println("Failed to get password hash")

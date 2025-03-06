@@ -14,15 +14,11 @@ type UserService struct {
 	Repository *repository.UserRepository // Dependency injection
 }
 
-func NewUserService(repository *repository.UserRepository) (*UserService, error) {
-
-	userService := new(UserService)
-	userService.Repository = repository
-
-	return userService, nil
+func NewUserService(repository *repository.UserRepository) *UserService {
+	return &UserService{Repository: repository}
 }
 
-func NewUser(username string, email string, password string) (*domain.User, error) {
+func (u *UserService) NewUser(username string, email string, password string) (*domain.User, error) {
 	user := new(domain.User)
 
 	// Validate email
