@@ -2,9 +2,10 @@ package handlers
 
 import (
 	"encoding/json"
-	"github.com/YasenMakioui/gosplash/internal/services"
 	"log/slog"
 	"net/http"
+
+	"github.com/YasenMakioui/gosplash/internal/services"
 )
 
 // UserDTO struct used only to decode the request body
@@ -46,7 +47,7 @@ func (u *UserHandler) Signup(w http.ResponseWriter, r *http.Request) {
 	// SignUp the user if the data is correct
 	// If further operations as saving to the database fail or another thing fails we return an error
 	if err := u.UserService.SignUp(user); err != nil {
-		slog.Error("Aborting user creation due to error: %v\n", err)
+		slog.Error("Aborting user creation due to error: %v\n", "err", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
