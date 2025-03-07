@@ -2,20 +2,22 @@ package middleware
 
 import (
 	"context"
-	"github.com/YasenMakioui/gosplash/internal/services"
-	"log"
+	"log/slog"
 	"net/http"
 	"strings"
+
+	"github.com/YasenMakioui/gosplash/internal/services"
 )
 
 type contextKey string
 
-const UserClaimsKey contextKey = "userClaims"
+const (
+	UserClaimsKey contextKey = "userClaims"
+	UsernameKey   contextKey = "username"
+)
 
 func ValidateJWT(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Println("Auth middleware")
-
 		// Check if it's a public route
 		publicPaths := []string{
 			"/healthz",
@@ -25,37 +27,37 @@ func ValidateJWT(next http.Handler) http.Handler {
 
 		for _, path := range publicPaths {
 			if strings.HasPrefix(r.URL.Path, path) {
-				log.Println("Public path")
 				next.ServeHTTP(w, r)
 				return
 			}
 		}
-		
+
 		jwtService := services.NewJwtService()
 
 		authHeader := r.Header.Get("Authorization")
 
 		if authHeader == "" {
-			log.Println("No Authorization header")
+			slog.Debug("No Authorization header found")
 			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 			return
 		}
 
-		log.Println("Validating JWT")
 		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+
+		slog.Debug("Validating JWT", "token", tokenString)
 
 		claims, err := jwtService.ValidateToken(tokenString)
 
 		if err != nil {
-			log.Println("Could not validate token")
+			slog.Debug("Could not validate token", "token", tokenString)
 			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 			return
 		}
 
-		log.Println("Token validated")
+		slog.Debug("Token is valid", "token", tokenString)
 
 		ctx := context.WithValue(r.Context(), UserClaimsKey, claims)
-		ctx = context.WithValue(ctx, "username", claims.Username)
+		ctx = context.WithValue(ctx, UserClaimsKey, claims.Username)
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
