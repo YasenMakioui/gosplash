@@ -1,21 +1,23 @@
 package main
 
 import (
+	"log/slog"
+	"net/http"
+	"os"
+
 	"github.com/YasenMakioui/gosplash/internal/config"
 	"github.com/YasenMakioui/gosplash/internal/handlers"
 	"github.com/YasenMakioui/gosplash/internal/logger"
 	"github.com/YasenMakioui/gosplash/internal/middleware"
 	"github.com/YasenMakioui/gosplash/internal/repository"
 	"github.com/YasenMakioui/gosplash/internal/services"
-	"log/slog"
-	"net/http"
-	"os"
 )
 
 func setupFileHandler() *handlers.FileHandler {
 	fileRepository, err := repository.NewFileRepository()
 	if err != nil {
 		slog.Error(err.Error())
+		os.Exit(1)
 	}
 
 	fileService := services.NewFileService(fileRepository)
@@ -23,6 +25,7 @@ func setupFileHandler() *handlers.FileHandler {
 	userRepository, err := repository.NewUserRepository()
 	if err != nil {
 		slog.Error(err.Error())
+		os.Exit(1)
 	}
 
 	userService := services.NewUserService(userRepository)
@@ -34,6 +37,7 @@ func setupUserHandler() *handlers.UserHandler {
 	userRepository, err := repository.NewUserRepository()
 	if err != nil {
 		slog.Error(err.Error())
+		os.Exit(1)
 	}
 
 	userService := services.NewUserService(userRepository)
@@ -45,6 +49,7 @@ func setupAuthHandler() *handlers.AuthHandler {
 	userRepository, err := repository.NewUserRepository()
 	if err != nil {
 		slog.Error(err.Error())
+		os.Exit(1)
 	}
 
 	authService := services.NewAuthService(userRepository)
@@ -63,11 +68,15 @@ func main() {
 
 	logger.SetupLogger()
 
+	slog.Info("Setting up handlers")
+
 	// Setup handlers. If one of them fails, the program won't start
 	fileHandler := setupFileHandler()
 	userHandler := setupUserHandler()
 	authHandler := setupAuthHandler()
 	healthHandler := setupHealthHandler()
+
+	slog.Info("Checking configuration")
 
 	// Check required environment variables
 	config.CheckConfig()
@@ -90,6 +99,8 @@ func main() {
 	stack := middleware.CreateStack(
 		middleware.ValidateJWT,
 	)
+
+	slog.Info("Listening on port :8080")
 
 	if err := http.ListenAndServe(":8080", stack(mux)); err != nil {
 		slog.Error(err.Error())
