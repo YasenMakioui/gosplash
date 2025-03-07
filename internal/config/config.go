@@ -15,7 +15,7 @@ func CheckConfig() {
 
 	for _, env := range requiredEnv {
 		if _, ok := os.LookupEnv(env); !ok {
-			slog.Error("Missing required environment variable: %s", env)
+			slog.Error("Missing required environment variable", "name", env)
 			os.Exit(1)
 		}
 	}
