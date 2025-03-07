@@ -2,10 +2,11 @@ package handlers
 
 import (
 	"encoding/json"
-	"github.com/YasenMakioui/gosplash/internal/services"
 	"log/slog"
 	"net/http"
 	"time"
+
+	"github.com/YasenMakioui/gosplash/internal/services"
 )
 
 type FileDTO struct {
@@ -68,6 +69,10 @@ func (f *FileHandler) UploadFile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userId, err := f.UserService.GetUserUUID(username)
+
+	if err != nil {
+		slog.Error("Couldn't retrieve uuid from user", "err", err)
+	}
 
 	r.Body = http.MaxBytesReader(w, r.Body, maxUploadSize)
 
