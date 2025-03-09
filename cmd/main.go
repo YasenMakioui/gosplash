@@ -11,6 +11,7 @@ import (
 	"github.com/YasenMakioui/gosplash/internal/middleware"
 	"github.com/YasenMakioui/gosplash/internal/repository"
 	"github.com/YasenMakioui/gosplash/internal/services"
+	"github.com/YasenMakioui/gosplash/internal/services/storage"
 )
 
 func setupFileHandler() *handlers.FileHandler {
@@ -20,7 +21,22 @@ func setupFileHandler() *handlers.FileHandler {
 		os.Exit(1)
 	}
 
-	fileService := services.NewFileService(fileRepository)
+	storageBackend := config.GetStorageBackend()
+	var gosplashStorage storage.Storage
+
+	switch storageBackend {
+	case "LOCAL":
+		gosplashStorage = storage.NewLocalStorage()
+	// case "S3":
+	// 	storage = storage.NewS3Storage() -- NOT IMPLEMENTED YET
+	default:
+		storageBackend = "LOCAL"
+		gosplashStorage = storage.NewLocalStorage()
+	}
+
+	slog.Debug("Setting up storage backend", "storage", gosplashStorage)
+
+	fileService := services.NewFileService(fileRepository, &gosplashStorage)
 
 	userRepository, err := repository.NewUserRepository()
 	if err != nil {

@@ -13,16 +13,18 @@ import (
 
 	"github.com/YasenMakioui/gosplash/internal/domain"
 	"github.com/YasenMakioui/gosplash/internal/repository"
+	"github.com/YasenMakioui/gosplash/internal/services/storage"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
 
 type FileService struct {
 	Repository *repository.FileRepository
+	Storage    *storage.Storage
 }
 
-func NewFileService(repository *repository.FileRepository) *FileService {
-	return &FileService{Repository: repository}
+func NewFileService(repository *repository.FileRepository, storage *storage.Storage) *FileService {
+	return &FileService{Repository: repository, Storage: storage}
 }
 
 // GetFiles will return all files owned by userId.

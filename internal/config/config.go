@@ -47,3 +47,7 @@ func GetLogLevel() slog.Level {
 
 	return slog.LevelInfo
 }
+
+func GetStorageBackend() string {
+	return os.Getenv("STORAGE")
+}
