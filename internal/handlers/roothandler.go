@@ -8,6 +8,7 @@ import (
 
 // Functions that are not methods and can be used by any that imported the package handlers
 
+// RootHandler will write a json with a message
 func RootHandler(w http.ResponseWriter, r *http.Request) {
 
 	resp := make(map[string]interface{})

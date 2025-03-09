@@ -1,9 +1,11 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/YasenMakioui/gosplash/internal/services"
 )
@@ -44,9 +46,12 @@ func (u *UserHandler) Signup(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second) // Use request context
+	defer cancel()
+
 	// SignUp the user if the data is correct
 	// If further operations as saving to the database fail or another thing fails we return an error
-	if err := u.UserService.SignUp(user); err != nil {
+	if err := u.UserService.SignUp(ctx, user); err != nil {
 		slog.Error("Aborting user creation due to error: %v\n", "err", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return

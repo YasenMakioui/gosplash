@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"log/slog"
 	"net/http"
@@ -36,7 +37,10 @@ func (f *FileHandler) GetFiles(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userId, err := f.UserService.GetUserUUID(username)
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second) // Use request context
+	defer cancel()
+
+	userId, err := f.UserService.GetUserUUID(ctx, username)
 
 	if err != nil {
 		slog.Error("Couldn't get UUID from user", "username", username, "err", err)
@@ -44,7 +48,7 @@ func (f *FileHandler) GetFiles(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	files, err := f.FileService.GetUserFiles(userId)
+	files, err := f.FileService.GetFiles(ctx, userId)
 
 	if err != nil {
 		slog.Error("Couldn't get files from user", "username", username, "err", err)
@@ -68,7 +72,10 @@ func (f *FileHandler) UploadFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userId, err := f.UserService.GetUserUUID(username)
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second) // Use request context
+	defer cancel()
+
+	userId, err := f.UserService.GetUserUUID(ctx, username)
 
 	if err != nil {
 		slog.Error("Couldn't retrieve uuid from user", "err", err)
@@ -89,7 +96,7 @@ func (f *FileHandler) UploadFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	uploadedFile, err := f.FileService.UploadFile(userId, file, handler)
+	uploadedFile, err := f.FileService.UploadFile(ctx, userId, file, handler)
 
 	if err != nil {
 		slog.Error(err.Error())
@@ -113,7 +120,10 @@ func (f *FileHandler) GetFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userId, err := f.UserService.GetUserUUID(username)
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second) // Use request context
+	defer cancel()
+
+	userId, err := f.UserService.GetUserUUID(ctx, username)
 
 	if err != nil {
 		slog.Error("Couldn't get UUID from user", "username", username, "err", err)
@@ -123,7 +133,7 @@ func (f *FileHandler) GetFile(w http.ResponseWriter, r *http.Request) {
 
 	slog.Debug("Getting file %s from user %s", "fileId", fileId, "userId", userId)
 
-	file, err := f.FileService.GetFile(fileId, userId)
+	file, err := f.FileService.GetFile(ctx, fileId, userId)
 
 	if err != nil {
 		slog.Debug("Couldn't get the file", "fileId", fileId, "userId", userId, "err", err)
@@ -148,7 +158,10 @@ func (f *FileHandler) DeleteFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userId, err := f.UserService.GetUserUUID(username)
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second) // Use request context
+	defer cancel()
+
+	userId, err := f.UserService.GetUserUUID(ctx, username)
 
 	if err != nil {
 		slog.Error("Couldn't get UUID from user", "username", username, "err", err)
@@ -158,7 +171,7 @@ func (f *FileHandler) DeleteFile(w http.ResponseWriter, r *http.Request) {
 
 	slog.Debug("Deleting file %s from user %s", fileId, userId)
 
-	if err := f.FileService.DeleteFile(fileId, userId); err != nil {
+	if err := f.FileService.DeleteFile(ctx, fileId, userId); err != nil {
 		slog.Error(err.Error())
 		http.Error(w, "Could not delete file", http.StatusInternalServerError)
 		return

@@ -1,10 +1,13 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
-	"github.com/YasenMakioui/gosplash/internal/services"
 	"log/slog"
 	"net/http"
+	"time"
+
+	"github.com/YasenMakioui/gosplash/internal/services"
 )
 
 type LoginDTO struct {
@@ -36,7 +39,10 @@ func (a *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	slog.Debug("Processing login request", "username", loginDTO.Username)
 
-	if err := a.AuthService.Login(loginDTO.Username, loginDTO.Password); err != nil {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second) // Use request context
+	defer cancel()
+
+	if err := a.AuthService.Login(ctx, loginDTO.Username, loginDTO.Password); err != nil {
 		slog.Debug("Failed authentication for user: %s", "username", loginDTO.Username, "err", err)
 		w.WriteHeader(http.StatusUnauthorized)
 		return

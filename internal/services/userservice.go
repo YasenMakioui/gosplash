@@ -1,13 +1,16 @@
 package services
 
 import (
+	"context"
 	"fmt"
+	"log/slog"
+	"time"
+
 	"github.com/YasenMakioui/gosplash/internal/domain"
 	"github.com/YasenMakioui/gosplash/internal/repository"
 	"github.com/YasenMakioui/gosplash/pkg/utils"
 	"github.com/google/uuid"
-	"log"
-	"time"
+	"github.com/jackc/pgx/v5"
 )
 
 type UserService struct {
@@ -18,33 +21,28 @@ func NewUserService(repository *repository.UserRepository) *UserService {
 	return &UserService{Repository: repository}
 }
 
+// NewUser creates a domain.User based on the UserDTO and validates  username, password and email
 func (u *UserService) NewUser(username string, email string, password string) (*domain.User, error) {
 	user := new(domain.User)
 
-	// Validate email
-	log.Printf("Checking email: %s", email)
+	slog.Debug("Checking email", "email", email)
 	if err := utils.ValidateEmail(email); err != nil {
 		return nil, err
 	}
 
-	// Check if password respects the requirements and hash it
-	log.Println("Hashing password...")
+	slog.Debug("Hashing password...")
 	passwordHash, err := utils.HashPassword(password)
 
 	if err != nil {
-		log.Println("Could not hash password")
+		slog.Debug("Could not hash password")
 		return nil, err
 	}
 
-	// Validate user
-
-	log.Printf("Checking username: %s", username)
+	slog.Debug("Checking username", "username", username)
 	if len(username) <= 0 {
-		log.Printf("Username is empty")
+		slog.Debug("Username is empty")
 		return nil, fmt.Errorf("username cannot be empty")
 	}
-
-	// Asign values
 
 	user.Id = uuid.New()
 	user.Username = username
@@ -56,24 +54,30 @@ func (u *UserService) NewUser(username string, email string, password string) (*
 	return user, nil
 }
 
-func (u *UserService) SignUp(user *domain.User) error {
-	// Check if the user exists
-	log.Println("Checking if user exists")
-	if err := u.Repository.CheckUser(user); err != nil {
+// SignUp Gives the user to the repository for its insertion in the database
+func (u *UserService) SignUp(ctx context.Context, user *domain.User) error {
+
+	if _, err := u.Repository.Find(ctx, user.Id.String()); err != nil {
+		if err != pgx.ErrNoRows {
+			slog.Error("Could not check user", "error", err)
+		}
+		slog.Debug("User exists", "user", user)
 		return fmt.Errorf("username is already taken")
 	}
 
-	// Create user
-	log.Println("Inserting new user")
-	if err := u.Repository.CreateUser(user); err != nil {
-		return fmt.Errorf("Could not create user")
+	slog.Debug("Performing user creation on user", "user", user)
+
+	if err := u.Repository.Insert(ctx, user); err != nil {
+		slog.Error("Could not insert user", "user", user, "error", err)
+		return fmt.Errorf("could not create user")
 	}
 
 	return nil
 }
 
-func (u *UserService) GetUserUUID(username string) (string, error) {
-	userUUID, err := u.Repository.GetUUID(username)
+// GetUserUUID will return the user id
+func (u *UserService) GetUserUUID(ctx context.Context, username string) (string, error) {
+	userUUID, err := u.Repository.GetUUID(ctx, username)
 
 	if err != nil {
 		return "", err

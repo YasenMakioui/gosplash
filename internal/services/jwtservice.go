@@ -2,9 +2,11 @@ package services
 
 import (
 	"fmt"
+	"log/slog"
+	"time"
+
 	"github.com/YasenMakioui/gosplash/internal/config"
 	"github.com/golang-jwt/jwt/v5"
-	"time"
 )
 
 type JwtService struct {
@@ -16,6 +18,7 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
+// NewJwtService returns a serivce using the secret key from the configuration
 func NewJwtService() *JwtService {
 	jwtSecret := config.GetSecretKey()
 
@@ -24,6 +27,7 @@ func NewJwtService() *JwtService {
 	}
 }
 
+// GenerateToken returns a token for the given user
 func (js *JwtService) GenerateToken(username string) (string, error) {
 	expirationTime := time.Now().Add(time.Hour)
 
@@ -39,13 +43,15 @@ func (js *JwtService) GenerateToken(username string) (string, error) {
 	return token.SignedString(js.Secret)
 }
 
+// ValidateToken Validates the given token and returns the a Claims struct if the validation was successfull
 func (js *JwtService) ValidateToken(tokenString string) (*Claims, error) {
 	claims := &Claims{}
 
-	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (any, error) {
 
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+			slog.Debug("Invalid token signing method", "method", token.Header["alg"])
+			return claims, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
 
 		return js.Secret, nil
@@ -56,7 +62,8 @@ func (js *JwtService) ValidateToken(tokenString string) (*Claims, error) {
 	}
 
 	if !token.Valid {
-		return nil, fmt.Errorf("invalid token")
+		slog.Debug("Invalid Token", "token", tokenString)
+		return claims, fmt.Errorf("invalid token")
 	}
 
 	return claims, nil
