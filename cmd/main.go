@@ -36,7 +36,7 @@ func setupFileHandler() *handlers.FileHandler {
 
 	slog.Debug("Setting up storage backend", "storage", gosplashStorage)
 
-	fileService := services.NewFileService(fileRepository, &gosplashStorage)
+	fileService := services.NewFileService(fileRepository, gosplashStorage)
 
 	userRepository, err := repository.NewUserRepository()
 	if err != nil {

@@ -3,7 +3,6 @@ package services
 import (
 	"context"
 	"fmt"
-	"io"
 
 	"log/slog"
 	"mime/multipart"
@@ -20,10 +19,10 @@ import (
 
 type FileService struct {
 	Repository *repository.FileRepository
-	Storage    *storage.Storage
+	Storage    storage.Storage
 }
 
-func NewFileService(repository *repository.FileRepository, storage *storage.Storage) *FileService {
+func NewFileService(repository *repository.FileRepository, storage storage.Storage) *FileService {
 	return &FileService{Repository: repository, Storage: storage}
 }
 
@@ -81,7 +80,7 @@ func (f *FileService) DeleteFile(ctx context.Context, fileId string, userId stri
 
 	slog.Debug("Deleted file from database", "fileId", fileId)
 
-	if err := os.RemoveAll(path.Dir(file.StoragePath)); err != nil {
+	if err := f.Storage.Delete(file.StoragePath); err != nil {
 		slog.Error("Could not remove file from storage", "path", file.StoragePath)
 		return err
 	}
@@ -111,31 +110,8 @@ func (f *FileService) UploadFile(ctx context.Context, userId string, uploadedFil
 		CreatedAt:     time.Now(),
 	}
 
-	defer uploadedFile.Close()
-
-	// Create dir
-
-	if err := os.MkdirAll(path.Dir(absolutePath), os.ModePerm); err != nil {
-		slog.Error("Could not crete directory", "path", absolutePath, "error", err)
-		return file, err
-	}
-
-	slog.Debug("File directory created successfully")
-
-	dst, err := os.Create(absolutePath)
-
-	if err != nil {
-		slog.Error("Could not create file", "path", absolutePath, "error", err)
-		return file, err
-	}
-
-	slog.Debug("Empty file created successfully")
-
-	defer dst.Close()
-
-	slog.Debug("Uploading file")
-	if _, err := io.Copy(dst, uploadedFile); err != nil {
-		slog.Error("Error uploading file", "path", absolutePath, "error", err)
+	if err := f.Storage.Upload(absolutePath, uploadedFile); err != nil {
+		slog.Error("Failed uploading file", "file", absolutePath)
 		return file, err
 	}
 
