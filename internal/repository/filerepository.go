@@ -27,7 +27,7 @@ func NewFileRepository() (*FileRepository, error) {
 	return &FileRepository{dbConn}, nil
 }
 
-// GetFiles Will return a list of file objects retrieved from the database. If either the query fails or the row iteration fails, an error is returned as well as a nil value. If there are no results
+// GetFiles Will return a list of file objects retrieved from the database. If either the query fails or the row iteration fails, an error is returned as well as a nil value. If there are no results an empty slice is returned.
 // An empty slice is returned
 func (r *FileRepository) FindAll(ctx context.Context, userId string) ([]domain.File, error) {
 	var files []domain.File
@@ -45,7 +45,7 @@ func (r *FileRepository) FindAll(ctx context.Context, userId string) ([]domain.F
 
 	if !rows.Next() {
 		slog.Debug("No files found for user", "userId", userId)
-		return files, nil
+		return []domain.File{}, nil
 	}
 
 	for rows.Next() {

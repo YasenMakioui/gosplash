@@ -57,7 +57,7 @@ func ValidateJWT(next http.Handler) http.Handler {
 		slog.Debug("Token is valid", "token", tokenString)
 
 		ctx := context.WithValue(r.Context(), UserClaimsKey, claims)
-		ctx = context.WithValue(ctx, UserClaimsKey, claims.Username)
+		ctx = context.WithValue(ctx, UsernameKey, claims.Username)
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})

@@ -20,13 +20,20 @@ func NewAuthService(userRepository *repository.UserRepository) *AuthService {
 // Login will perform a login operation and will return a nil if succeded
 func (a *AuthService) Login(ctx context.Context, username string, password string) error {
 
-	passwordHash, err := a.Repository.GetPasswordHash(ctx, username)
+	userId, err := a.Repository.GetUUID(ctx, username)
 
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			slog.Debug("User does not exist", "error", err)
 			return err
 		}
+		slog.Error("Failed to get user id")
+		return err
+	}
+
+	passwordHash, err := a.Repository.GetPasswordHash(ctx, userId)
+
+	if err != nil {
 		slog.Error("Failed to get password hash")
 		return err
 	}

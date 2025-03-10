@@ -61,8 +61,7 @@ func (u *UserService) SignUp(ctx context.Context, user *domain.User) error {
 		if err != pgx.ErrNoRows {
 			slog.Error("Could not check user", "error", err)
 		}
-		slog.Debug("User exists", "user", user)
-		return fmt.Errorf("username is already taken")
+		slog.Debug("User does not exist", "user", user, "error", err)
 	}
 
 	slog.Debug("Performing user creation on user", "user", user)

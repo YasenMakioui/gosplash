@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/YasenMakioui/gosplash/internal/middleware"
 	"github.com/YasenMakioui/gosplash/internal/services"
 )
 
@@ -29,10 +30,10 @@ func NewFileHandler(userService *services.UserService, fileService *services.Fil
 }
 
 func (f *FileHandler) GetFiles(w http.ResponseWriter, r *http.Request) {
-	username, ok := r.Context().Value("username").(string)
+	username, ok := r.Context().Value(middleware.UsernameKey).(string)
 
 	if !ok {
-		slog.Error("Couldn't get username from context")
+		slog.Error("Couldn't get username from context", "username", username)
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
@@ -65,7 +66,7 @@ func (f *FileHandler) GetFiles(w http.ResponseWriter, r *http.Request) {
 func (f *FileHandler) UploadFile(w http.ResponseWriter, r *http.Request) {
 	const maxUploadSize = 50 << 30 // 50GB todo change to env
 
-	username, ok := r.Context().Value("username").(string)
+	username, ok := r.Context().Value(middleware.UsernameKey).(string)
 	if !ok {
 		slog.Error("Couldn't get username from context")
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
@@ -110,7 +111,7 @@ func (f *FileHandler) UploadFile(w http.ResponseWriter, r *http.Request) {
 }
 
 func (f *FileHandler) GetFile(w http.ResponseWriter, r *http.Request) {
-	username, ok := r.Context().Value("username").(string)
+	username, ok := r.Context().Value(middleware.UsernameKey).(string)
 
 	fileId := r.PathValue("fileId")
 
@@ -148,7 +149,7 @@ func (f *FileHandler) GetFile(w http.ResponseWriter, r *http.Request) {
 }
 
 func (f *FileHandler) DeleteFile(w http.ResponseWriter, r *http.Request) {
-	username, ok := r.Context().Value("username").(string)
+	username, ok := r.Context().Value(middleware.UsernameKey).(string)
 
 	fileId := r.PathValue("fileId")
 
