@@ -112,6 +112,9 @@ func main() {
 	mux.HandleFunc("GET /files/{fileId}/metadata", fileHandler.GetFile)
 	mux.HandleFunc("DELETE /files/{fileId}", fileHandler.DeleteFile)
 
+	mux.HandleFunc("GET /files/{fileId}", fileHandler.DownloadFile)
+	mux.HandleFunc("POST /files/{fileId}/share/{entity}", fileHandler.ShareFile)
+
 	stack := middleware.CreateStack(
 		middleware.ValidateJWT,
 	)

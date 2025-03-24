@@ -15,7 +15,6 @@ func RootHandler(w http.ResponseWriter, r *http.Request) {
 
 	resp["message"] = "gosplash!"
 	resp["status"] = http.StatusOK
-	resp["user"] = r.Context().Value("username")
 
 	if err := json.NewEncoder(w).Encode(resp); err != nil {
 		slog.Error(err.Error())

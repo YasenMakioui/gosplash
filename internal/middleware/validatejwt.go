@@ -25,7 +25,14 @@ func ValidateJWT(next http.Handler) http.Handler {
 			"/auth/signup",
 		}
 
+		slog.Debug("Got request on", "path", r.URL.Path)
+
 		for _, path := range publicPaths {
+			if r.URL.Path == "/" {
+				next.ServeHTTP(w, r)
+				return
+			}
+
 			if strings.HasPrefix(r.URL.Path, path) {
 				next.ServeHTTP(w, r)
 				return

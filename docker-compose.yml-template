@@ -1,0 +1,38 @@
+services:
+  gosplash:
+    build:
+      dockerfile: Dockerfile
+      context: ./
+    volumes:
+      - ./:/app
+    ports:
+      - 8080:8080
+    env_file:
+      - .env
+    depends_on:
+      - postgres
+  
+  postgres:
+    image: postgres:17.4-alpine
+    restart: always
+    shm_size: 128mb
+    env_file:
+      - .postgres.env
+    volumes:
+      - ./data:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+
+  oauth2-proxy:
+    image: quay.io/oauth2-proxy/oauth2-proxy-nightly:latest
+    environment:
+      - OAUTH2_PROXY_UPSTREAMS=http://gosplash:8080
+      - OAUTH2_PROXY_COOKIE_SECRET=
+      - OAUTH2_PROXY_EMAIL_DOMAINS=*
+      - OAUTH2_PROXY_CLIENT_ID=
+      - OAUTH2_PROXY_CLIENT_SECRET=
+      - OAUTH2_PROXY_HTTP_ADDRESS=0.0.0.0:4180
+      - OAUTH2_PROXY_REDIRECT_URL=http://localhost:4180/oauth2/callback
+    ports:
+      - 4180:4180
+      

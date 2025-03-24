@@ -32,6 +32,8 @@ func NewFileHandler(userService *services.UserService, fileService *services.Fil
 func (f *FileHandler) GetFiles(w http.ResponseWriter, r *http.Request) {
 	username, ok := r.Context().Value(middleware.UsernameKey).(string)
 
+	slog.Debug("Getting files for user", "username", username)
+
 	if !ok {
 		slog.Error("Couldn't get username from context", "username", username)
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
@@ -56,6 +58,8 @@ func (f *FileHandler) GetFiles(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Could not get user files", http.StatusInternalServerError)
 		return
 	}
+
+	slog.Debug("Got files", "files", files)
 
 	if err := json.NewEncoder(w).Encode(files); err != nil {
 		slog.Error("Couldn't encode files to JSON", "username", username, "err", err)
@@ -178,3 +182,7 @@ func (f *FileHandler) DeleteFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+
+func (*FileHandler) DownloadFile(w http.ResponseWriter, r *http.Request) {}
+
+func (*FileHandler) ShareFile(w http.ResponseWriter, r *http.Request) {}

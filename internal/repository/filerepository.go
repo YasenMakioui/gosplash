@@ -30,7 +30,11 @@ func NewFileRepository() (*FileRepository, error) {
 // GetFiles Will return a list of file objects retrieved from the database. If either the query fails or the row iteration fails, an error is returned as well as a nil value. If there are no results an empty slice is returned.
 // An empty slice is returned
 func (r *FileRepository) FindAll(ctx context.Context, userId string) ([]domain.File, error) {
-	var files []domain.File
+	//var files []domain.File
+
+	files := []domain.File{} // Since we could get nothing from the database this is preferred instead of var file []domain.File
+
+	slog.Debug("Retrieving all files", "userId", userId)
 
 	query := `SELECT * FROM files WHERE uploader_id = $1`
 
@@ -42,11 +46,6 @@ func (r *FileRepository) FindAll(ctx context.Context, userId string) ([]domain.F
 	}
 
 	defer rows.Close()
-
-	if !rows.Next() {
-		slog.Debug("No files found for user", "userId", userId)
-		return []domain.File{}, nil
-	}
 
 	for rows.Next() {
 		file := domain.File{}
@@ -66,6 +65,9 @@ func (r *FileRepository) FindAll(ctx context.Context, userId string) ([]domain.F
 			slog.Error("Failed to scan resultset from database")
 			return nil, err
 		}
+
+		slog.Debug("Mapped file", "file", file)
+
 		files = append(files, file)
 	}
 
