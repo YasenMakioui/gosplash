@@ -1,23 +1,31 @@
 package handlers
 
 import (
-	"encoding/json"
+	"html/template"
 	"log/slog"
 	"net/http"
 )
 
-// Functions that are not methods and can be used by any that imported the package handlers
+func renderTemplate(w http.ResponseWriter, tmpl string, data any) {
+	tmplPath := "templates/" + tmpl + ".html"
+	tmpls, err := template.ParseFiles("templates/base.html", tmplPath)
 
-// RootHandler will write a json with a message
+	if err != nil {
+		http.Error(w, "Error loading template", http.StatusInternalServerError)
+		slog.Debug(err.Error())
+		return
+	}
+	if err := tmpls.ExecuteTemplate(w, "base.html", data); err != nil {
+		slog.Debug(err.Error())
+	}
+}
+
 func RootHandler(w http.ResponseWriter, r *http.Request) {
 
-	resp := make(map[string]interface{})
-
-	resp["message"] = "gosplash!"
-	resp["status"] = http.StatusOK
-
-	if err := json.NewEncoder(w).Encode(resp); err != nil {
-		slog.Error(err.Error())
-		w.WriteHeader(http.StatusInternalServerError)
+	data := map[string]any{
+		"Title": "dummy",
 	}
+
+	slog.Debug("hit")
+	renderTemplate(w, "index", data)
 }

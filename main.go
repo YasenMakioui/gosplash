@@ -49,30 +49,30 @@ func setupFileHandler() *handlers.FileHandler {
 	return handlers.NewFileHandler(userService, fileService)
 }
 
-func setupUserHandler() *handlers.UserHandler {
-	userRepository, err := repository.NewUserRepository()
-	if err != nil {
-		slog.Error(err.Error())
-		os.Exit(1)
-	}
+// func setupUserHandler() *handlers.UserHandler {
+// 	userRepository, err := repository.NewUserRepository()
+// 	if err != nil {
+// 		slog.Error(err.Error())
+// 		os.Exit(1)
+// 	}
 
-	userService := services.NewUserService(userRepository)
+// 	userService := services.NewUserService(userRepository)
 
-	return handlers.NewUserHandler(userService)
-}
+// 	return handlers.NewUserHandler(userService)
+// }
 
-func setupAuthHandler() *handlers.AuthHandler {
-	userRepository, err := repository.NewUserRepository()
-	if err != nil {
-		slog.Error(err.Error())
-		os.Exit(1)
-	}
+// func setupAuthHandler() *handlers.AuthHandler {
+// 	userRepository, err := repository.NewUserRepository()
+// 	if err != nil {
+// 		slog.Error(err.Error())
+// 		os.Exit(1)
+// 	}
 
-	authService := services.NewAuthService(userRepository)
-	jwtService := services.NewJwtService()
+// 	authService := services.NewAuthService(userRepository)
+// 	jwtService := services.NewJwtService()
 
-	return handlers.NewAuthHandler(authService, jwtService)
-}
+// 	return handlers.NewAuthHandler(authService, jwtService)
+// }
 
 func setupHealthHandler() *handlers.HealthHandler {
 	return handlers.NewHealthHandler()
@@ -88,8 +88,8 @@ func main() {
 
 	// Setup handlers. If one of them fails, the program won't start
 	fileHandler := setupFileHandler()
-	userHandler := setupUserHandler()
-	authHandler := setupAuthHandler()
+	// userHandler := setupUserHandler()
+	// authHandler := setupAuthHandler()
 	healthHandler := setupHealthHandler()
 
 	slog.Info("Checking configuration")
@@ -104,8 +104,8 @@ func main() {
 	mux.HandleFunc("/", handlers.RootHandler)
 	mux.HandleFunc("/healthz", healthHandler.CheckServerStatus)
 
-	mux.HandleFunc("POST /auth/login", authHandler.LoginHandler)
-	mux.HandleFunc("POST /auth/signup", userHandler.Signup)
+	// mux.HandleFunc("POST /auth/login", authHandler.LoginHandler) Using third party provider for that. OATUH2 PROXY
+	// mux.HandleFunc("POST /auth/signup", userHandler.Signup)
 
 	mux.HandleFunc("GET /files", fileHandler.GetFiles)
 	mux.HandleFunc("POST /files", fileHandler.UploadFile)
@@ -116,7 +116,8 @@ func main() {
 	mux.HandleFunc("POST /files/{fileId}/share/{entity}", fileHandler.ShareFile)
 
 	stack := middleware.CreateStack(
-		middleware.ValidateJWT,
+	//middleware.ValidateJWT, Not using our own Auth methods.
+	//middleware.Auth,
 	)
 
 	slog.Info("Listening on port :8080")
